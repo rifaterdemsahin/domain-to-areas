@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>From Domains to Areas — P.A.R.A. meets Domain-Driven Design</title>
+<meta name="description" content="Mapping Tiago Forte's P.A.R.A. method onto Eric Evans' Domain-Driven Design for a multi-agent AGI framework." />
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #111c33;
+    --panel-2: #16233f;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --border: #1f2c47;
+
+    --projects: #38bdf8;
+    --areas: #34d399;
+    --resources: #fbbf24;
+    --archive: #a78bfa;
+
+    --hermes: #818cf8;
+    --grok: #2dd4bf;
+    --aom: #f472b6;
+    --human: #fbbf24;
+
+    --maxw: 1100px;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+    letter-spacing: 0.1px;
+  }
+
+  .wrap {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+
+  section + section { margin-top: 72px; }
+
+  h1, h2, h3, h4 {
+    line-height: 1.25;
+    margin: 0 0 16px;
+    letter-spacing: -0.01em;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 6vw, 3.1rem);
+    margin-bottom: 14px;
+    background: linear-gradient(100deg, var(--projects), var(--areas) 42%, var(--aom) 78%, var(--archive));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  h2 {
+    font-size: clamp(1.35rem, 3.4vw, 1.85rem);
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h3 { font-size: 1.12rem; }
+  h4 { font-size: 0.95rem; }
+
+  p { margin: 0 0 16px; }
+
+  .subtitle {
+    font-size: clamp(1rem, 2.4vw, 1.2rem);
+    color: var(--muted);
+    max-width: 70ch;
+    margin: 0 0 16px;
+  }
+
+  .eyebrow {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    margin: 0 0 14px;
+  }
+
+  .lede { max-width: 72ch; }
+  .muted { color: var(--muted); }
+
+  code, kbd, .mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  code {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1px 6px;
+    font-size: 0.86em;
+    color: var(--text);
+  }
+
+  /* ---------- mapping strip ---------- */
+  .strip {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    margin: 28px 0 8px;
+  }
+
+  .strip-item {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .strip-item .from {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+
+  .strip-item .arrow {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .strip-item .to {
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .strip-item.t-projects { border-left: 4px solid var(--projects); }
+  .strip-item.t-areas { border-left: 4px solid var(--areas); }
+  .strip-item.t-resources { border-left: 4px solid var(--resources); }
+  .strip-item.t-archive { border-left: 4px solid var(--archive); }
+
+  .goal {
+    margin-top: 28px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--aom);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+
+  .goal strong { color: var(--aom); }
+
+  /* ---------- PARA cards ---------- */
+  .cards {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    margin-top: 24px;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 20px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .card.projects { border-left: 5px solid var(--projects); }
+  .card.areas { border-left: 5px solid var(--areas); }
+  .card.resources { border-left: 5px solid var(--resources); }
+  .card.archive { border-left: 5px solid var(--archive); }
+
+  .card .card-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .card .card-head h3 { margin: 0; }
+  .card.projects .card-head h3 { color: var(--projects); }
+  .card.areas .card-head h3 { color: var(--areas); }
+  .card.resources .card-head h3 { color: var(--resources); }
+  .card.archive .card-head h3 { color: var(--archive); }
+
+  .card .tag {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 2px 9px;
+    white-space: nowrap;
+  }
+
+  .row { display: flex; flex-direction: column; gap: 4px; }
+
+  .row .label {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+  }
+
+  .row .value { font-size: 0.95rem; }
+
+  .owner {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    flex: none;
+  }
+
+  .dot.hermes { background: var(--hermes); }
+  .dot.grok { background: var(--grok); }
+  .dot.search { background: var(--resources); }
+  .dot.archival { background: var(--archive); }
+
+  /* ---------- tables ---------- */
+  .table-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-top: 24px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 720px;
+    font-size: 0.93rem;
+  }
+
+  caption {
+    text-align: left;
+    color: var(--muted);
+    font-size: 0.85rem;
+    padding: 12px 16px;
+  }
+
+  thead th {
+    text-align: left;
+    background: var(--panel-2);
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: rgba(22, 35, 63, 0.45); }
+
+  tbody td:first-child {
+    font-weight: 700;
+  }
+
+  .c-projects { color: var(--projects); }
+  .c-areas { color: var(--areas); }
+  .c-resources { color: var(--resources); }
+  .c-archive { color: var(--archive); }
+
+  .agent-name {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-weight: 600;
+  }
+
+  .agent-name.hermes { color: var(--hermes); }
+  .agent-name.grok { color: var(--grok); }
+  .agent-name.search { color: var(--resources); }
+  .agent-name.archival { color: var(--archive); }
+
+  /* ---------- diagram figure ---------- */
+  figure {
+    margin: 24px 0 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 20px 14px;
+  }
+
+  figure a {
+    display: block;
+    text-decoration: none;
+    cursor: zoom-in;
+  }
+
+  figure img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: calc(var(--radius) - 6px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+    border: 1px solid var(--border);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  figure a:hover img {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65);
+  }
+
+  figure svg { display: block; width: 100%; height: auto; }
+
+  figcaption {
+    color: var(--muted);
+    font-size: 0.88rem;
+    margin-top: 14px;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  figcaption strong { color: var(--text); }
+  figcaption em { color: var(--aom); font-style: normal; }
+
+  /* ---------- old vs new ---------- */
+  .paradigm {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    margin-top: 24px;
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .panel.old { border-top: 4px solid var(--muted); }
+  .panel.new { border-top: 4px solid var(--human); }
+
+  .panel h3 { margin-bottom: 8px; }
+  .panel.old h3 { color: var(--muted); }
+  .panel.new h3 { color: var(--human); }
+
+  .shift {
+    margin-top: 28px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    text-align: center;
+    font-size: 1.02rem;
+  }
+
+  .shift strong { color: var(--human); }
+
+  /* ---------- pillars ---------- */
+  .pillars {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    margin-top: 24px;
+  }
+
+  .pillar {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 5px solid var(--aom);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .pillar h3 {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    color: var(--aom);
+    letter-spacing: 0.04em;
+  }
+
+  .pillar p:last-child { margin-bottom: 0; color: var(--muted); }
+
+  /* ---------- footer ---------- */
+  footer {
+    margin-top: 80px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.88rem;
+  }
+
+  .credits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    margin-bottom: 12px;
+  }
+
+  .credits span {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 0.8rem;
+  }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 640px) {
+    .wrap { padding: 36px 16px 60px; }
+    section + section { margin-top: 52px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  @media print {
+    :root { --bg: #ffffff; --panel: #ffffff; --panel-2: #f4f4f4; --text: #0f172a; --muted: #44506b; --border: #c8cfdd; }
+    body { background: #ffffff; color: #0f172a; }
+    .wrap { max-width: none; padding: 0; }
+    figure, .card, .panel, .pillar, .goal, .strip-item { break-inside: avoid; }
+    h1 { -webkit-text-fill-color: #0f172a; color: #0f172a; background: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ 1. HEADER + RATIONALE ============ -->
+  <header>
+    <p class="eyebrow">P.A.R.A. &times; Domain-Driven Design</p>
+    <h1>From Domains to Areas</h1>
+    <p class="subtitle">Mapping Tiago Forte's P.A.R.A. onto Eric Evans' Domain-Driven Design for a multi-agent AGI framework.</p>
+
+    <p class="lede">
+      P.A.R.A. is a personal knowledge-management method: it sorts everything into
+      <strong>Projects</strong>, <strong>Areas</strong>, <strong>Resources</strong>, and
+      <strong>Archive</strong>. That taxonomy is excellent at telling us <em>what kind of thing</em>
+      an item is, but it says nothing about <em>ownership, invariants, or lifecycle</em>. When
+      autonomous agents act on those items, the missing structure becomes dangerous: a permanent
+      responsibility gets mistaken for a disposable task, and an agent happily "completes" a duty
+      that never had an end date.
+    </p>
+
+    <p class="lede">
+      Domain-Driven Design supplies exactly the missing vocabulary. By mapping each PARA category
+      onto a DDD pattern, we give every bucket an explicit <strong>bounded context</strong>, a clear
+      owner, and rules about what may change and when.
+    </p>
+
+    <div class="strip" role="list">
+      <div class="strip-item t-projects" role="listitem">
+        <span class="from">Projects — transient</span>
+        <span class="arrow">&rarr;</span>
+        <span class="to">Application Services / Sagas</span>
+        <span class="muted">Short-lived, orchestrated, compensatable workflows.</span>
+      </div>
+      <div class="strip-item t-areas" role="listitem">
+        <span class="from">Areas — perpetual</span>
+        <span class="arrow">&rarr;</span>
+        <span class="to">Core Bounded Contexts / Aggregate Roots</span>
+        <span class="muted">Long-lived, invariant-protecting, own their language.</span>
+      </div>
+      <div class="strip-item t-resources" role="listitem">
+        <span class="from">Resources — shared knowledge</span>
+        <span class="arrow">&rarr;</span>
+        <span class="to">Shared Kernel / Supporting Subdomain</span>
+        <span class="muted">Deliberately shared model reused across contexts.</span>
+      </div>
+      <div class="strip-item t-archive" role="listitem">
+        <span class="from">Archive — historical state</span>
+        <span class="arrow">&rarr;</span>
+        <span class="to">Event Store / cold storage</span>
+        <span class="muted">Append-only history, replayable, low-cost.</span>
+      </div>
+    </div>
+
+    <div class="goal">
+      <p>
+        <strong>Goal.</strong> Give autonomous agents explicit <strong>long-term bounded contexts</strong>
+        instead of treating ongoing responsibilities as one-off tasks. An ongoing responsibility (an
+        <strong>Area</strong>) must never be modeled as a disposable, completable task (a
+        <strong>Project</strong>). DDD is what prevents that category error.
+      </p>
+    </div>
+  </header>
+
+  <!-- ============ 2. FOUR-CARD PARA GRID ============ -->
+  <section aria-labelledby="para-grid-title">
+    <h2 id="para-grid-title">The four PARA components, restated as domain objects</h2>
+    <p class="muted">Each component gets a description, its DDD mapping, and the agent that owns it.</p>
+
+    <div class="cards">
+      <article class="card projects">
+        <div class="card-head">
+          <h3>Projects</h3>
+          <span class="tag">Transient</span>
+        </div>
+        <div class="row">
+          <span class="label">Description</span>
+          <span class="value">Transient, time-boxed efforts with a defined outcome and end date.</span>
+        </div>
+        <div class="row">
+          <span class="label">DDD mapping</span>
+          <span class="value">Application Services / Sagas — orchestrated, short-lived workflows with compensating actions.</span>
+        </div>
+        <div class="row">
+          <span class="label">Owned by</span>
+          <span class="value"><span class="owner"><span class="dot hermes"></span>Hermes</span> — orchestrator.</span>
+        </div>
+      </article>
+
+      <article class="card areas">
+        <div class="card-head">
+          <h3>Areas</h3>
+          <span class="tag">Perpetual</span>
+        </div>
+        <div class="row">
+          <span class="label">Description</span>
+          <span class="value">Perpetual standards and responsibilities to maintain over time; no end date.</span>
+        </div>
+        <div class="row">
+          <span class="label">DDD mapping</span>
+          <span class="value">Core Bounded Contexts / Aggregate Roots — long-lived, enforce invariants, own their own language.</span>
+        </div>
+        <div class="row">
+          <span class="label">Owned by</span>
+          <span class="value"><span class="owner"><span class="dot grok"></span>Grok Bot</span> — domain supervisor.</span>
+        </div>
+      </article>
+
+      <article class="card resources">
+        <div class="card-head">
+          <h3>Resources</h3>
+          <span class="tag">Shared</span>
+        </div>
+        <div class="row">
+          <span class="label">Description</span>
+          <span class="value">Shared knowledge and reference material reused across domains.</span>
+        </div>
+        <div class="row">
+          <span class="label">DDD mapping</span>
+          <span class="value">Shared Kernel / Supporting Subdomain — a deliberately shared model with explicit contracts.</span>
+        </div>
+        <div class="row">
+          <span class="label">Owned by</span>
+          <span class="value"><span class="owner"><span class="dot search"></span>Search / RAG agent</span></span>
+        </div>
+      </article>
+
+      <article class="card archive">
+        <div class="card-head">
+          <h3>Archive</h3>
+          <span class="tag">Historical</span>
+        </div>
+        <div class="row">
+          <span class="label">Description</span>
+          <span class="value">Inactive but retained items; historical state kept for audit and replay.</span>
+        </div>
+        <div class="row">
+          <span class="label">DDD mapping</span>
+          <span class="value">Event Store / cold storage — append-only history, replayable, low-cost.</span>
+        </div>
+        <div class="row">
+          <span class="label">Owned by</span>
+          <span class="value"><span class="owner"><span class="dot archival"></span>Archival agent</span></span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ 3. AGENT-DOMAIN MAPPING TABLE ============ -->
+  <section aria-labelledby="mapping-table-title">
+    <h2 id="mapping-table-title">Agent&ndash;domain mapping</h2>
+    <p class="muted">Which agent answers for which PARA component, and under which DDD pattern.</p>
+
+    <div class="table-scroll">
+      <table>
+        <caption>PARA component &rarr; DDD pattern &rarr; responsible agent.</caption>
+        <thead>
+          <tr>
+            <th scope="col">PARA component</th>
+            <th scope="col">DDD mapping</th>
+            <th scope="col">Responsible agent</th>
+            <th scope="col">Agent role description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="c-projects">Projects</td>
+            <td>Application Services / Sagas</td>
+            <td><span class="agent-name hermes">Hermes</span></td>
+            <td>Orchestrates transient, goal-seeking workflows; decomposes intent into tasks and drives them to completion with compensating actions on failure.</td>
+          </tr>
+          <tr>
+            <td class="c-areas">Areas</td>
+            <td>Core Bounded Contexts / Aggregate Roots</td>
+            <td><span class="agent-name grok">Grok Bot</span></td>
+            <td>Supervises perpetual responsibilities; guards aggregate invariants and the ubiquitous language of each long-lived domain.</td>
+          </tr>
+          <tr>
+            <td class="c-resources">Resources</td>
+            <td>Shared Kernel / Supporting Subdomain</td>
+            <td><span class="agent-name search">Search / RAG agent</span></td>
+            <td>Curates and retrieves shared knowledge; serves grounded context to other agents under explicit shared-kernel contracts.</td>
+          </tr>
+          <tr>
+            <td class="c-archive">Archive</td>
+            <td>Event Store / cold storage</td>
+            <td><span class="agent-name archival">Archival agent</span></td>
+            <td>Persists and replays historical state; owns the append-only event log and cold-storage tier.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ 4. SYSTEM DIAGRAM ============ -->
+  <section aria-labelledby="system-diagram-title">
+    <h2 id="system-diagram-title">System flow: intent &rarr; agents &rarr; AOM &rarr; human vision</h2>
+    <p class="muted">User intent is routed into both the project (transient) and area (perpetual) worlds, then fused by an Adaptive Object Modeling engine whose output is surfaced to human judgment.</p>
+
+    <figure>
+      <a href="AOM_DSL.jpeg" target="_blank" rel="noopener noreferrer" title="Click to view full-resolution image in a new tab">
+        <img src="AOM_DSL.jpeg" alt="AOM and DSL Architecture Diagram: User Intent routed to Hermes Orchestrator (Projects / Sagas) and Grok Bot Domain Guard (Areas / Bounded Contexts), processed by the Adaptive Object Modeling (Joe Yoder) Engine with Runtime Metadata and Dynamic Types, governed by the Human Governance Pillars: Adapt, Train, Secure." width="1920" height="1080" loading="eager" />
+      </a>
+      <figcaption>
+        <strong>System Architecture:</strong> Intent &rarr; Hermes &amp; Grok Bot &rarr; Adaptive Object Modeling Engine &rarr; Human Governance Pillars. <em>Coding is no longer the bottleneck &mdash; Adapt, Train, Secure are.</em>
+      </figcaption>
+    </figure>
+
+    <figure style="margin-top: 28px;">
+      <svg viewBox="0 0 900 660" role="img" aria-labelledby="sys-title sys-desc">
+        <title id="sys-title">AGI agent flow diagram</title>
+        <desc id="sys-desc">User Intent routes to both Hermes, which handles Projects and Sagas, and Grok Bot, which handles Areas and Bounded Contexts. Both feed into an Adaptive Object Modeling engine with runtime metadata, a dynamic type system, and Entity-Attribute-Value modeling rather than hardcoded classes. The engine output feeds into Human Vision.</desc>
+
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--muted)" />
+          </marker>
+          <marker id="arrow-aom" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--aom)" />
+          </marker>
+        </defs>
+
+        <!-- User Intent -->
+        <rect x="330" y="20" width="240" height="62" rx="12" fill="var(--panel-2)" stroke="var(--human)" stroke-width="2" />
+        <text x="450" y="57" text-anchor="middle" fill="var(--text)" font-family="ui-monospace, monospace" font-size="16" font-weight="bold">User Intent</text>
+
+        <!-- split arrows -->
+        <path d="M 450 82 L 450 112 L 230 112 L 230 148" fill="none" stroke="var(--muted)" stroke-width="2" marker-end="url(#arrow)" />
+        <path d="M 450 82 L 450 112 L 670 112 L 670 148" fill="none" stroke="var(--muted)" stroke-width="2" marker-end="url(#arrow)" />
+
+        <!-- Hermes -->
+        <rect x="90" y="150" width="280" height="86" rx="12" fill="var(--panel)" stroke="var(--hermes)" stroke-width="2" />
+        <text x="230" y="183" text-anchor="middle" fill="var(--hermes)" font-family="ui-monospace, monospace" font-size="16" font-weight="bold">Hermes</text>
+        <text x="230" y="206" text-anchor="middle" fill="var(--text)" font-family="ui-monospace, monospace" font-size="13">Projects / Sagas</text>
+        <text x="230" y="224" text-anchor="middle" fill="var(--muted)" font-size="11">transient &middot; orchestrated</text>
+
+        <!-- Grok -->
+        <rect x="530" y="150" width="280" height="86" rx="12" fill="var(--panel)" stroke="var(--grok)" stroke-width="2" />
+        <text x="670" y="183" text-anchor="middle" fill="var(--grok)" font-family="ui-monospace, monospace" font-size="16" font-weight="bold">Grok Bot</text>
+        <text x="670" y="206" text-anchor="middle" fill="var(--text)" font-family="ui-monospace, monospace" font-size="13">Areas / Bounded Contexts</text>
+        <text x="670" y="224" text-anchor="middle" fill="var(--muted)" font-size="11">perpetual &middot; invariant-guarding</text>
+
+        <!-- arrows into AOM -->
+        <path d="M 230 236 L 230 268 L 350 268 L 350 300" fill="none" stroke="var(--muted)" stroke-width="2" marker-end="url(#arrow)" />
+        <path d="M 670 236 L 670 268 L 550 268 L 550 300" fill="none" stroke="var(--muted)" stroke-width="2" marker-end="url(#arrow)" />
+
+        <!-- AOM engine -->
+        <rect x="120" y="302" width="660" height="168" rx="12" fill="var(--panel-2)" stroke="var(--aom)" stroke-width="2.5" />
+        <text x="450" y="336" text-anchor="middle" fill="var(--aom)" font-family="ui-monospace, monospace" font-size="17" font-weight="bold">Adaptive Object Modeling (AOM) Engine</text>
+        <text x="450" y="360" text-anchor="middle" fill="var(--muted)" font-size="12">Joe Yoder's pattern &mdash; model lives as data, not as compiled classes</text>
+
+        <rect x="150" y="376" width="200" height="34" rx="8" fill="var(--panel)" stroke="var(--border)" />
+        <text x="250" y="398" text-anchor="middle" fill="var(--text)" font-family="ui-monospace, monospace" font-size="12">runtime metadata</text>
+
+        <rect x="366" y="376" width="200" height="34" rx="8" fill="var(--panel)" stroke="var(--border)" />
+        <text x="466" y="398" text-anchor="middle" fill="var(--text)" font-family="ui-monospace, monospace" font-size="12">dynamic type system</text>
+
+        <rect x="582" y="376" width="170" height="34" rx="8" fill="var(--panel)" stroke="var(--border)" />
+        <text x="667" y="398" text-anchor="middle" fill="var(--text)" font-family="ui-monospace, monospace" font-size="11">generic value model</text>
+
+        <text x="450" y="440" text-anchor="middle" fill="var(--text)" font-size="12">Entity-Attribute-Value (EAV) &mdash; not hardcoded classes</text>
+        <text x="450" y="458" text-anchor="middle" fill="var(--muted)" font-size="11">new types &amp; rules are metadata, altered at runtime</text>
+
+        <!-- arrow to Human Vision -->
+        <path d="M 450 470 L 450 516" fill="none" stroke="var(--aom)" stroke-width="2.5" marker-end="url(#arrow-aom)" />
+
+        <!-- Human Vision -->
+        <rect x="315" y="518" width="270" height="66" rx="12" fill="var(--panel)" stroke="var(--human)" stroke-width="2" />
+        <text x="450" y="547" text-anchor="middle" fill="var(--human)" font-family="ui-monospace, monospace" font-size="16" font-weight="bold">Human Vision</text>
+        <text x="450" y="568" text-anchor="middle" fill="var(--muted)" font-size="11">governance &middot; judgment &middot; accountability</text>
+      </svg>
+      <figcaption>
+        Adaptive Object Modeling (AOM) is Joe Yoder's pattern: the domain model is data
+        &mdash; runtime metadata + a dynamic type system + an Entity-Attribute-Value (EAV) store
+        &mdash; rather than hardcoded classes.
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ============ 5. AOM CONNECTION: OLD vs NEW + PILLARS ============ -->
+  <section aria-labelledby="paradigm-title">
+    <h2 id="paradigm-title">The AOM connection: why the bottleneck moves</h2>
+    <p class="muted">Once the model is runtime metadata, changing a domain stops being a code change. That removes coding as the constraint &mdash; and promotes human governance to the top of the queue.</p>
+
+    <div class="paradigm">
+      <div class="panel old">
+        <h3>Old paradigm</h3>
+        <p>Coding is the bottleneck &mdash; engineers hand-write domain classes; every domain change requires code, review, and redeploy.</p>
+      </div>
+      <div class="panel new">
+        <h3>New paradigm</h3>
+        <p>AI generates/alters AOM runtime metadata on the fly &mdash; new types, attributes and rules are metadata, so coding is no longer the bottleneck.</p>
+      </div>
+    </div>
+
+    <p class="shift">The bottleneck has shifted from <strong>coding</strong> to <strong>human governance</strong>.</p>
+
+    <figure aria-labelledby="bottleneck-title">
+      <svg viewBox="0 0 900 200" role="img" aria-labelledby="bn-title bn-desc">
+        <title id="bn-title">Bottleneck shift diagram</title>
+        <desc id="bn-desc">The old bottleneck was coding. It shifts to a new bottleneck of human governance, made up of Adapt, Train, and Secure.</desc>
+
+        <defs>
+          <marker id="arrow-shift" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--human)" />
+          </marker>
+        </defs>
+
+        <rect x="40" y="60" width="240" height="80" rx="12" fill="var(--panel)" stroke="var(--muted)" stroke-width="2" />
+        <text x="160" y="95" text-anchor="middle" fill="var(--muted)" font-family="ui-monospace, monospace" font-size="14" font-weight="bold">Old bottleneck</text>
+        <text x="160" y="118" text-anchor="middle" fill="var(--text)" font-size="13">Coding</text>
+
+        <path d="M 290 100 L 590 100" fill="none" stroke="var(--human)" stroke-width="2.5" marker-end="url(#arrow-shift)" />
+        <text x="440" y="88" text-anchor="middle" fill="var(--human)" font-family="ui-monospace, monospace" font-size="12">bottleneck shifts</text>
+
+        <rect x="600" y="40" width="270" height="120" rx="12" fill="var(--panel-2)" stroke="var(--human)" stroke-width="2.5" />
+        <text x="735" y="70" text-anchor="middle" fill="var(--human)" font-family="ui-monospace, monospace" font-size="14" font-weight="bold">New bottleneck</text>
+        <text x="735" y="93" text-anchor="middle" fill="var(--text)" font-size="13">Human Governance</text>
+        <text x="735" y="120" text-anchor="middle" fill="var(--aom)" font-family="ui-monospace, monospace" font-size="12">Adapt &middot; Train &middot; Secure</text>
+      </svg>
+      <figcaption>The constraint relocates from producing code to governing the model.</figcaption>
+    </figure>
+
+    <h3 style="margin-top:36px">The three human governance pillars</h3>
+    <div class="pillars">
+      <article class="pillar">
+        <h3>Adapt</h3>
+        <p>Keeping AOM metadata and domain boundaries aligned as reality changes.</p>
+      </article>
+      <article class="pillar">
+        <h3>Train</h3>
+        <p>Feedback loops, RLHF, and domain grounding to prevent hallucinated rules.</p>
+      </article>
+      <article class="pillar">
+        <h3>Secure</h3>
+        <p>Guardrails, sandboxing, context isolation, and access control to stop autonomous agents from breaching invariants or escalating privilege.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ 6. SUMMARY MATRIX ============ -->
+  <section aria-labelledby="matrix-title">
+    <h2 id="matrix-title">Summary matrix: the human's job</h2>
+    <p class="muted">The same three pillars, restated against their focus area, their DDD/PARA equivalent, and the concrete action a human must own.</p>
+
+    <div class="table-scroll">
+      <table>
+        <caption>Governance pillars mapped to domains and human actions.</caption>
+        <thead>
+          <tr>
+            <th scope="col">Pillar</th>
+            <th scope="col">Focus area</th>
+            <th scope="col">DDD/PARA equivalent</th>
+            <th scope="col">Human action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="c-areas">Adapt</td>
+            <td>Keeping models aligned with reality</td>
+            <td>Areas keep changing shapes &rarr; Bounded Contexts &amp; Aggregate boundaries</td>
+            <td>Review AOM metadata and redraw domain boundaries as the business changes.</td>
+          </tr>
+          <tr>
+            <td class="c-projects">Train</td>
+            <td>Feedback loops &amp; domain grounding</td>
+            <td>Sagas &harr; Projects; RLHF grounded in Core Domains</td>
+            <td>Curate feedback, label outcomes, and ground agents in real domain rules to prevent hallucinated rules.</td>
+          </tr>
+          <tr>
+            <td class="c-archive">Secure</td>
+            <td>Guardrails, sandboxing, context isolation, access control</td>
+            <td>Aggregate invariants; Shared Kernel contracts</td>
+            <td>Enforce least privilege, isolate agent context, and block invariant breaches or privilege escalation.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ 7. FOOTER ============ -->
+  <footer>
+    <div class="credits">
+      <span>Domain-Driven Design &mdash; Eric Evans</span>
+      <span>P.A.R.A. Method &mdash; Tiago Forte</span>
+      <span>Adaptive Object Modeling &mdash; Joe Yoder</span>
+    </div>
+    <p class="muted" style="margin:0">Static page. No JavaScript. No external dependencies.</p>
+  </footer>
+
+</div>
+</body>
+</html>
